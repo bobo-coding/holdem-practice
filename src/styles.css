@@ -324,6 +324,25 @@ table.t th {
   color: #c02b21;
 }
 
+/* ---------- Spot 局面 ---------- */
+.spot-setup {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.spot-board {
+  background: var(--bg-elev2);
+  border-radius: 12px;
+  padding: 12px;
+  margin: 10px 0;
+}
+.spot-history {
+  padding-left: 10px;
+  border-left: 2px solid var(--accent-dim);
+  font-size: 15px;
+  color: var(--fg-dim);
+}
+
 /* ---------- 训练器 ---------- */
 .hand {
   display: flex;

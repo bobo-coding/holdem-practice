@@ -3,6 +3,7 @@ import { load } from '../lib/storage'
 import { RangeTrainer } from '../features/RangeTrainer'
 import { CalcDrill } from '../features/CalcDrill'
 import { TextureDrill } from '../features/TextureDrill'
+import { SpotTrainer } from '../features/SpotTrainer'
 import { GENERATORS, type GeneratorId } from '../data/generators'
 
 const RFI_DRILL = 'rfi-6max-100bb'
@@ -62,9 +63,9 @@ const CATALOG: Entry[] = [
     id: 'spot',
     statId: 'spot',
     name: 'Spot Trainer',
-    desc: '完整局面多选 + 解析',
-    level: 'L3–L6',
-    ready: false,
+    desc: '完整局面多选 + 解析，覆盖翻牌到河牌',
+    level: 'L3–L4',
+    ready: true,
   },
   {
     id: 'readrange',
@@ -133,6 +134,8 @@ export function DrillPage({ id }: { id: string }) {
         <RangeTrainer />
       ) : id === 'texture' ? (
         <TextureDrill />
+      ) : id === 'spot' ? (
+        <SpotTrainer />
       ) : isCalc ? (
         <CalcDrill id={id as GeneratorId} />
       ) : (

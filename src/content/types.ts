@@ -14,6 +14,10 @@ export type Block =
   | { t: 'replay'; setup: string; hero: string[]; steps: ReplayStep[] }
   /** 引用预计算的翻牌对抗数据，boards 用 "K♠ 7♦ 2♣" 形式 */
   | { t: 'flops'; boards: string[]; caption?: string }
+  /** 引用预计算的转牌数据，flop 用 "K♠ 7♦ 2♣" 形式 */
+  | { t: 'turns'; flop: string; caption?: string }
+  /** 引用预计算的阻断牌数据 */
+  | { t: 'blockers'; board: string; target: string; caption?: string }
 
 export interface ReplayStep {
   /** 街名，如 "翻牌 Flop" */

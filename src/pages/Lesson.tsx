@@ -7,6 +7,7 @@ import { parseRange } from '../lib/range'
 import { RangeGrid } from '../features/RangeGrid'
 import { Cards } from '../features/Cards'
 import { FLOPS } from '../data/flops'
+import { TURNS, BLOCKERS } from '../data/postflop'
 import { addMistake, markLesson } from '../lib/storage'
 import { navigate } from '../lib/router'
 
@@ -109,6 +110,80 @@ function BlockView({ b }: { b: Block }) {
           <div class="muted">
             CO 开池范围 vs BB 跟注范围，30 万次模拟。数据由 scripts/precompute-flops.ts 生成。
           </div>
+        </div>
+      )
+    }
+    case 'turns': {
+      const c = TURNS.find((t) => t.flop.join(' ') === b.flop)
+      if (!c) return null
+      return (
+        <div class="flopdata">
+          {b.caption && <div class="muted">{b.caption}</div>}
+          <div class="row" style="margin:8px 0">
+            <span class="muted">翻牌</span>
+            <Cards cards={c.flop} />
+          </div>
+          <table class="t">
+            <thead>
+              <tr>
+                <th>转牌</th>
+                <th>CO 胜率</th>
+                <th>两对+ CO/BB</th>
+              </tr>
+            </thead>
+            <tbody>
+              {c.rows.map((r) => (
+                <tr key={r.turn}>
+                  <td>
+                    <Cards cards={[r.turn]} />
+                    <div class="muted" style="font-size:12px">{r.label.split('——')[1]?.trim()}</div>
+                  </td>
+                  <td class={r.coEq >= 57 ? 'good' : r.coEq <= 54.5 ? 'bad' : ''}>{r.coEq.toFixed(1)}%</td>
+                  <td class={r.bbStrong > r.coStrong ? 'bad' : ''}>
+                    {r.coStrong.toFixed(1)}% / {r.bbStrong.toFixed(1)}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div class="muted">范围为翻前范围，未按翻后行动收窄；方向性结论不受影响。</div>
+        </div>
+      )
+    }
+    case 'blockers': {
+      const c = BLOCKERS.find((x) => x.board.join(' ') === b.board && x.target === b.target)
+      if (!c) return null
+      return (
+        <div class="flopdata">
+          {b.caption && <div class="muted">{b.caption}</div>}
+          <div class="row" style="margin:8px 0">
+            <Cards cards={c.board} />
+          </div>
+          <table class="t">
+            <thead>
+              <tr>
+                <th>你持有</th>
+                <th>对手{c.target}</th>
+                <th>减少</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="muted">基准（无阻断）</td>
+                <td>{c.baseline} 个组合</td>
+                <td class="muted">—</td>
+              </tr>
+              {c.rows.map((r) => (
+                <tr key={r.desc}>
+                  <td>{r.desc}</td>
+                  <td>{r.combos} 个组合</td>
+                  <td class={r.combos < c.baseline ? 'good' : ''}>
+                    {c.baseline ? Math.round((1 - r.combos / c.baseline) * 100) : 0}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )
     }
