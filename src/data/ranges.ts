@@ -47,7 +47,29 @@ export const RFI_6MAX: RangeTable = {
   },
 }
 
+/** 单个范围（非按位置分的表） */
+export interface SimpleRange {
+  id: string
+  name: string
+  conditions: string
+  nature: 'consensus' | 'simplified'
+  caveat?: string
+  notation: string
+}
+
+export const BB_CALL_VS_CO: SimpleRange = {
+  id: 'bb-call-vs-co',
+  name: 'BB 面对 CO 开池的跟注范围',
+  conditions: '6 人桌 · 100bb · 无 ante · 对手开 2.5bb · 已扣除 3bet 部分',
+  nature: 'simplified',
+  caveat:
+    '这是「跟注」范围，不含 BB 的 3bet 范围（QQ+、AK 等强牌走 3bet 那条线），所以它的上限天然被削。翻后所有关于 BB 范围的判断都要记住这一点。真实策略在边缘手上是混合频率，本表压成了硬边界。',
+  notation:
+    '22-JJ, A2s-AJs, K2s+, Q4s+, J6s+, T6s+, 96s+, 85s+, 74s+, 63s+, 53s+, 43s, A2o-AJo, K7o+, Q8o+, J8o+, T8o+, 97o+, 87o, 76o',
+}
+
 export const RANGE_TABLES: RangeTable[] = [RFI_6MAX]
+export const SIMPLE_RANGES: SimpleRange[] = [BB_CALL_VS_CO]
 
 export function findTable(id: string): RangeTable | undefined {
   return RANGE_TABLES.find((t) => t.id === id)

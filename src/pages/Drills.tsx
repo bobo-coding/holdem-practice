@@ -2,6 +2,7 @@ import { navigate } from '../lib/router'
 import { load } from '../lib/storage'
 import { RangeTrainer } from '../features/RangeTrainer'
 import { CalcDrill } from '../features/CalcDrill'
+import { TextureDrill } from '../features/TextureDrill'
 import { GENERATORS, type GeneratorId } from '../data/generators'
 
 const RFI_DRILL = 'rfi-6max-100bb'
@@ -53,9 +54,9 @@ const CATALOG: Entry[] = [
     id: 'texture',
     statId: 'texture',
     name: 'Board Texture 分类',
-    desc: '牌面归类 + 谁有范围优势',
+    desc: '牌面归类 + 谁有范围优势（真实模拟数据）',
     level: 'L3',
-    ready: false,
+    ready: true,
   },
   {
     id: 'spot',
@@ -130,6 +131,8 @@ export function DrillPage({ id }: { id: string }) {
       </div>
       {id === 'rfi' ? (
         <RangeTrainer />
+      ) : id === 'texture' ? (
+        <TextureDrill />
       ) : isCalc ? (
         <CalcDrill id={id as GeneratorId} />
       ) : (

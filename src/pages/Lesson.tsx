@@ -5,6 +5,8 @@ import type { Block, Question } from '../content/types'
 import { findTable, POSITION_LABEL } from '../data/ranges'
 import { parseRange } from '../lib/range'
 import { RangeGrid } from '../features/RangeGrid'
+import { Cards } from '../features/Cards'
+import { FLOPS } from '../data/flops'
 import { addMistake, markLesson } from '../lib/storage'
 import { navigate } from '../lib/router'
 
@@ -73,13 +75,50 @@ function BlockView({ b }: { b: Block }) {
         />
       )
     }
+    case 'flops': {
+      const rows = b.boards
+        .map((key) => FLOPS.find((f) => f.board.join(' ') === key))
+        .filter((f): f is (typeof FLOPS)[number] => !!f)
+      return (
+        <div class="flopdata">
+          {b.caption && <div class="muted">{b.caption}</div>}
+          <table class="t">
+            <thead>
+              <tr>
+                <th>牌面</th>
+                <th>CO 胜率</th>
+                <th>两对+ CO/BB</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((f) => (
+                <tr key={f.board.join('')}>
+                  <td>
+                    <Cards cards={f.board} />
+                  </td>
+                  <td class={f.coEq >= 55 ? 'good' : f.coEq <= 51 ? 'bad' : ''}>
+                    {f.coEq.toFixed(1)}%
+                  </td>
+                  <td>
+                    {f.coStrong.toFixed(1)}% / {f.bbStrong.toFixed(1)}%
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div class="muted">
+            CO 开池范围 vs BB 跟注范围，30 万次模拟。数据由 scripts/precompute-flops.ts 生成。
+          </div>
+        </div>
+      )
+    }
     case 'replay':
       return (
         <div class="replay">
           <div class="muted setup">{b.setup}</div>
           <div class="row hero">
             <span class="muted">你的手牌</span>
-            <Cards cards={b.hero} big />
+            <Cards cards={b.hero} size="lg" />
           </div>
           {b.steps.map((s, i) => (
             <div class="step" key={i}>
@@ -95,20 +134,6 @@ function BlockView({ b }: { b: Block }) {
         </div>
       )
   }
-}
-
-const RED = ['♦', '♥']
-
-function Cards({ cards, big }: { cards: string[]; big?: boolean }) {
-  return (
-    <div class={`cards${big ? ' big' : ''}`}>
-      {cards.map((c, i) => (
-        <span key={i} class={`mini${RED.some((s) => c.includes(s)) ? ' red' : ''}`}>
-          {c}
-        </span>
-      ))}
-    </div>
-  )
 }
 
 function Quiz({ questions, lessonId }: { questions: Question[]; lessonId: string }) {

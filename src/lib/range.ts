@@ -39,9 +39,12 @@ export function gridCodes(): HandCode[][] {
   )
 }
 
-function pairsFrom(lowRank: string, highRank: string): HandCode[] {
+/** 两端顺序任意，"22-JJ" 和 "JJ-22" 等价 */
+function pairsFrom(a: string, b: string): HandCode[] {
   const out: HandCode[] = []
-  for (let i = idx(highRank); i <= idx(lowRank); i++) out.push(`${RANKS[i]}${RANKS[i]}`)
+  const from = Math.min(idx(a), idx(b))
+  const to = Math.max(idx(a), idx(b))
+  for (let i = from; i <= to; i++) out.push(`${RANKS[i]}${RANKS[i]}`)
   return out
 }
 

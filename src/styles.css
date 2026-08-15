@@ -295,8 +295,21 @@ table.t th {
   gap: 5px;
   margin-top: 8px;
 }
-.cards.big {
-  margin-top: 0;
+.cards.lg .mini {
+  font-size: 18px;
+  padding: 5px 9px;
+}
+.flopdata {
+  margin: 16px 0;
+}
+.flopdata .cards {
+  margin: 0;
+}
+.flopdata td.good {
+  color: var(--accent);
+}
+.flopdata td.bad {
+  color: var(--warn);
 }
 .mini {
   background: #f4f6f4;

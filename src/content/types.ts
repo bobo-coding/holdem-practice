@@ -12,6 +12,8 @@ export type Block =
   | { t: 'range'; tableId: string; position: Position }
   /** 手牌走读：逐街回放，每一步带决策注解 */
   | { t: 'replay'; setup: string; hero: string[]; steps: ReplayStep[] }
+  /** 引用预计算的翻牌对抗数据，boards 用 "K♠ 7♦ 2♣" 形式 */
+  | { t: 'flops'; boards: string[]; caption?: string }
 
 export interface ReplayStep {
   /** 街名，如 "翻牌 Flop" */
