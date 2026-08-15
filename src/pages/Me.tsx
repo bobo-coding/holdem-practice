@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks'
-import { exportCode, importCode, load, reset } from '../lib/storage'
+import { exportCode, importCode, load, reset, SKILL_LABEL } from '../lib/storage'
 import { TOTAL_LESSONS } from '../data/curriculum'
 
 export function MePage() {
@@ -50,7 +50,7 @@ export function MePage() {
             .map((m) => (
               <div key={m.id} class="row" style="padding:6px 0;border-top:1px solid var(--line)">
                 <span style="font-size:14px">{m.prompt}</span>
-                <span class="tag">{m.tag}</span>
+                <span class="tag">{SKILL_LABEL[m.tag] ?? m.tag}</span>
               </div>
             ))}
         </div>

@@ -7,11 +7,21 @@
 const KEY = 'holdem.progress.v1'
 
 export type SkillTag =
+  | 'basics'
   | 'preflop'
   | 'math'
   | 'postflop'
   | 'reading'
   | 'mental'
+
+export const SKILL_LABEL: Record<SkillTag, string> = {
+  basics: '地基',
+  preflop: '翻前',
+  math: '数学',
+  postflop: '翻后',
+  reading: '读牌',
+  mental: '心态',
+}
 
 export interface LessonState {
   done: boolean

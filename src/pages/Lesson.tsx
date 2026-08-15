@@ -73,7 +73,42 @@ function BlockView({ b }: { b: Block }) {
         />
       )
     }
+    case 'replay':
+      return (
+        <div class="replay">
+          <div class="muted setup">{b.setup}</div>
+          <div class="row hero">
+            <span class="muted">你的手牌</span>
+            <Cards cards={b.hero} big />
+          </div>
+          {b.steps.map((s, i) => (
+            <div class="step" key={i}>
+              <div class="row">
+                <b>{s.street}</b>
+                {s.pot && <span class="tag">底池 {s.pot}</span>}
+              </div>
+              {s.board && <Cards cards={s.board} />}
+              <div class="act">{s.action}</div>
+              {s.note && <div class="note">{s.note}</div>}
+            </div>
+          ))}
+        </div>
+      )
   }
+}
+
+const RED = ['♦', '♥']
+
+function Cards({ cards, big }: { cards: string[]; big?: boolean }) {
+  return (
+    <div class={`cards${big ? ' big' : ''}`}>
+      {cards.map((c, i) => (
+        <span key={i} class={`mini${RED.some((s) => c.includes(s)) ? ' red' : ''}`}>
+          {c}
+        </span>
+      ))}
+    </div>
+  )
 }
 
 function Quiz({ questions, lessonId }: { questions: Question[]; lessonId: string }) {
