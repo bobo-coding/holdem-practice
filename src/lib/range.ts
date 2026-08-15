@@ -133,3 +133,36 @@ export function toCards(code: HandCode): [string, string, boolean] {
   const suited = code.endsWith('s')
   return [hi, lo, suited]
 }
+
+export interface Overlap {
+  /** 按组合数加权的重合度（交集 / 并集） */
+  score: number
+  hit: HandCode[]
+  missed: HandCode[]
+  extra: HandCode[]
+}
+
+/** 按组合数加权比较两个范围。加权的意义：画错一个对子（6 组合）的代价小于画错一个不同花手（12 组合） */
+export function compare(user: Set<HandCode>, answer: Set<HandCode>): Overlap {
+  const hit: HandCode[] = []
+  const missed: HandCode[] = []
+  const extra: HandCode[] = []
+  let inter = 0
+  let union = 0
+  for (const code of gridCodes().flat()) {
+    const u = user.has(code)
+    const a = answer.has(code)
+    if (u && a) {
+      hit.push(code)
+      inter += comboCount(code)
+      union += comboCount(code)
+    } else if (a) {
+      missed.push(code)
+      union += comboCount(code)
+    } else if (u) {
+      extra.push(code)
+      union += comboCount(code)
+    }
+  }
+  return { score: union ? (inter / union) * 100 : 0, hit, missed, extra }
+}

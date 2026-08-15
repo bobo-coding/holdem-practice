@@ -4,6 +4,7 @@ import { RangeTrainer } from '../features/RangeTrainer'
 import { CalcDrill } from '../features/CalcDrill'
 import { TextureDrill } from '../features/TextureDrill'
 import { SpotTrainer } from '../features/SpotTrainer'
+import { RangeReadDrill } from '../features/RangeReadDrill'
 import { GENERATORS, type GeneratorId } from '../data/generators'
 
 const RFI_DRILL = 'rfi-6max-100bb'
@@ -71,9 +72,9 @@ const CATALOG: Entry[] = [
     id: 'readrange',
     statId: 'readrange',
     name: '范围推断题',
-    desc: '画出对手范围，比对重合度',
+    desc: '在矩阵上画出对手范围，按组合数算重合度',
     level: 'L5',
-    ready: false,
+    ready: true,
   },
   {
     id: 'pushfold',
@@ -136,6 +137,8 @@ export function DrillPage({ id }: { id: string }) {
         <TextureDrill />
       ) : id === 'spot' ? (
         <SpotTrainer />
+      ) : id === 'readrange' ? (
+        <RangeReadDrill />
       ) : isCalc ? (
         <CalcDrill id={id as GeneratorId} />
       ) : (

@@ -230,6 +230,30 @@ table.t th {
   background: var(--accent-dim);
   color: #dcfff0;
 }
+.cell.missed {
+  background: rgba(240, 180, 41, 0.55);
+  color: #2b1f00;
+}
+.cell.extra {
+  background: rgba(229, 83, 75, 0.5);
+  color: #2b0d0b;
+}
+.grid.paint {
+  touch-action: none;
+  cursor: crosshair;
+}
+.grid.paint .cell {
+  pointer-events: none;
+}
+.grid.paint.off {
+  opacity: 0.6;
+}
+.swatch.miss {
+  background: rgba(240, 180, 41, 0.55);
+}
+.swatch.ext {
+  background: rgba(229, 83, 75, 0.5);
+}
 .cell.hit {
   outline: 2px solid #fff;
   outline-offset: -2px;
