@@ -1,16 +1,86 @@
 import { navigate } from '../lib/router'
 import { load } from '../lib/storage'
 import { RangeTrainer } from '../features/RangeTrainer'
+import { CalcDrill } from '../features/CalcDrill'
+import { GENERATORS, type GeneratorId } from '../data/generators'
 
-const CATALOG = [
-  { id: 'rfi', name: '翻前范围训练器', desc: '随机位置 + 手牌，判断开池或弃牌', level: 'L1', ready: true },
-  { id: 'odds', name: '赔率闪卡', desc: '限时计算底池赔率与必要胜率', level: 'L2', ready: false },
-  { id: 'ev', name: 'EV 计算题', desc: '分步填空，给出完整解算', level: 'L2', ready: false },
-  { id: 'combo', name: 'Combo 计数', desc: '给定范围数组合、算 blocker 影响', level: 'L2', ready: false },
-  { id: 'texture', name: 'Board Texture 分类', desc: '牌面归类 + 谁有范围优势', level: 'L3', ready: false },
-  { id: 'spot', name: 'Spot Trainer', desc: '完整局面多选 + 解析', level: 'L3–L6', ready: false },
-  { id: 'readrange', name: '范围推断题', desc: '画出对手范围，比对重合度', level: 'L5', ready: false },
-  { id: 'pushfold', name: 'Push/Fold 训练', desc: '筹码深度 + 位置 + ICM', level: 'L7', ready: false },
+const RFI_DRILL = 'rfi-6max-100bb'
+
+interface Entry {
+  id: string
+  /** 统计用的 drill id，与存储里的 key 一致 */
+  statId: string
+  name: string
+  desc: string
+  level: string
+  ready: boolean
+}
+
+const CATALOG: Entry[] = [
+  {
+    id: 'rfi',
+    statId: RFI_DRILL,
+    name: '翻前范围训练器',
+    desc: '随机位置 + 手牌，判断开池或弃牌',
+    level: 'L1',
+    ready: true,
+  },
+  {
+    id: 'odds',
+    statId: 'odds',
+    name: '赔率闪卡',
+    desc: '限时计算跟注所需的最低胜率',
+    level: 'L2',
+    ready: true,
+  },
+  {
+    id: 'ev',
+    statId: 'ev',
+    name: 'EV 计算题',
+    desc: '诈唬 EV、盈亏平衡弃牌率、跟注 EV',
+    level: 'L2',
+    ready: true,
+  },
+  {
+    id: 'combo',
+    statId: 'combo',
+    name: 'Combo 计数',
+    desc: '数组合、算阻断牌的影响',
+    level: 'L2',
+    ready: true,
+  },
+  {
+    id: 'texture',
+    statId: 'texture',
+    name: 'Board Texture 分类',
+    desc: '牌面归类 + 谁有范围优势',
+    level: 'L3',
+    ready: false,
+  },
+  {
+    id: 'spot',
+    statId: 'spot',
+    name: 'Spot Trainer',
+    desc: '完整局面多选 + 解析',
+    level: 'L3–L6',
+    ready: false,
+  },
+  {
+    id: 'readrange',
+    statId: 'readrange',
+    name: '范围推断题',
+    desc: '画出对手范围，比对重合度',
+    level: 'L5',
+    ready: false,
+  },
+  {
+    id: 'pushfold',
+    statId: 'pushfold',
+    name: 'Push/Fold 训练',
+    desc: '筹码深度 + 位置 + ICM',
+    level: 'L7',
+    ready: false,
+  },
 ]
 
 export function DrillsPage() {
@@ -22,7 +92,7 @@ export function DrillsPage() {
       </div>
 
       {CATALOG.map((d) => {
-        const s = p.drills[d.id === 'rfi' ? 'rfi-6max-100bb' : d.id]
+        const s = p.drills[d.statId]
         const rate = s && s.attempts ? Math.round((s.correct / s.attempts) * 100) : null
         return (
           <div
@@ -48,15 +118,23 @@ export function DrillsPage() {
 }
 
 export function DrillPage({ id }: { id: string }) {
+  const entry = CATALOG.find((d) => d.id === id)
+  const isCalc = id in GENERATORS
   return (
     <>
       <div class="topbar">
         <span class="back" onClick={() => navigate('/drills')}>
           ‹ 练习
         </span>
-        <h1 style="font-size:17px">翻前范围</h1>
+        <h1 style="font-size:17px">{entry?.name ?? '练习'}</h1>
       </div>
-      {id === 'rfi' ? <RangeTrainer /> : <div class="card">这个训练还没上线。</div>}
+      {id === 'rfi' ? (
+        <RangeTrainer />
+      ) : isCalc ? (
+        <CalcDrill id={id as GeneratorId} />
+      ) : (
+        <div class="card">这个训练还没上线。</div>
+      )}
     </>
   )
 }
