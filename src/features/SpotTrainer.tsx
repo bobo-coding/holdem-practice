@@ -31,7 +31,7 @@ export function SpotTrainer() {
       addMistake({
         id: `${DRILL_ID}:${spot.id}`,
         tag: spot.tag,
-        prompt: `${spot.board.join(' ')} — ${spot.topic}`,
+        prompt: `${(spot.board.length ? spot.board : spot.hero).join(' ')} — ${spot.topic}`,
       })
   }
 
@@ -41,7 +41,7 @@ export function SpotTrainer() {
         <div class="row">
           <span class="tag">{spot.level}</span>
           <span class="muted" style="font-size:13px">
-            6-max · 0.5/1 · 100bb
+            {spot.format ?? '6-max · 0.5/1 · 100bb'}
           </span>
         </div>
 
@@ -57,9 +57,11 @@ export function SpotTrainer() {
             <span class="muted">{spot.street}</span>
             <span class="tag">底池 {spot.pot}</span>
           </div>
-          <div style="margin-top:8px">
-            <Cards cards={spot.board} size="lg" />
-          </div>
+          {spot.board.length > 0 && (
+            <div style="margin-top:8px">
+              <Cards cards={spot.board} size="lg" />
+            </div>
+          )}
         </div>
 
         <div class="spot-history">{spot.history}</div>
@@ -115,7 +117,7 @@ export function SpotTrainer() {
 
       <div class="card">
         <div class="muted">
-          共 {SPOTS.length} 个局面，覆盖 L3–L4 的核心概念。解析里引用的范围数据均来自实际模拟。
+          共 {SPOTS.length} 个局面，覆盖 L3–L4 翻后与 L8 深筹码的核心概念。解析里引用的范围数据均来自实际模拟。
         </div>
       </div>
     </div>

@@ -65,8 +65,8 @@ const CATALOG: Entry[] = [
     id: 'spot',
     statId: 'spot',
     name: 'Spot Trainer',
-    desc: '完整局面多选 + 解析，覆盖翻牌到河牌',
-    level: 'L3–L4',
+    desc: '完整局面多选 + 解析，覆盖翻后与深筹码',
+    level: 'L3–L4 · L8',
     ready: true,
   },
   {

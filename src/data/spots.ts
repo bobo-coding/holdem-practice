@@ -3,7 +3,8 @@ import type { SkillTag } from '../lib/storage'
 /**
  * Spot Trainer 题库：完整局面 + 多选 + 解析。
  *
- * 所有局面统一为 6-max 现金局、盲注 0.5/1、有效筹码 100bb，底池单位 bb。
+ * 默认局面为 6-max 现金局、盲注 0.5/1、有效筹码 100bb，底池单位 bb；
+ * 不同的局面（深筹码、线下 straddle 局）用 format 字段标出。
  * 解析里引用的范围数据来自 scripts/precompute-flops.ts 与 precompute-postflop.ts。
  */
 export interface Spot {
@@ -21,6 +22,8 @@ export interface Spot {
   answer: number
   explain: string
   tag: SkillTag
+  /** 桌型与深度，缺省为 6-max · 0.5/1 · 100bb */
+  format?: string
 }
 
 export const SPOTS: Spot[] = [
@@ -279,5 +282,73 @@ export const SPOTS: Spot[] = [
     explain:
       '面对 1/3 池你只需要 25% 胜率，MDF 高达 75%。87s 有后门同花和后门顺子，转牌有相当概率变成真听牌。对手在这张牌面上用整个范围小注，正是因为大量对手对小注防守不足 —— 弃掉这类有后门权益的牌，就是在为他的策略买单。加注则没有依据：这张牌面明显对他有利。',
     tag: 'postflop',
+  },
+  {
+    id: 'S17',
+    level: 'L8',
+    topic: '深筹码下用小对子跟注 3bet',
+    format: '6-max · 0.5/1 · 200bb',
+    setup: '你在 CO 开池 2.5bb，盲注弃牌',
+    hero: ['5♠', '5♦'],
+    board: [],
+    street: '翻前',
+    pot: '12bb',
+    history: 'BTN 3bet 到 8bb',
+    options: ['弃牌', '跟注', '4bet 到 20bb'],
+    answer: 1,
+    explain:
+      '口袋对翻牌中三条或更好的概率 11.8%（约 7.5 : 1）。跟注 5.5bb，击中时平均需要再赢约 41bb 才回本。BTN 的 3bet 范围里有大量超对会在你中三条时付钱，而 200bb 深时他身后还有 192bb —— 隐含赔率足够。同样的局面在 100bb 时接近弃牌。4bet 则把 55 变成一个阻断效果很差、被 5bet 后只能弃掉的诈唬。',
+    tag: 'preflop',
+  },
+  {
+    id: 'S18',
+    level: 'L8',
+    topic: '深筹码下有位跟注 3bet 的选牌',
+    format: '6-max · 0.5/1 · 200bb',
+    setup: '你在 BTN 开池 2.5bb，BB 弃牌',
+    hero: ['7♠', '6♠'],
+    board: [],
+    street: '翻前',
+    pot: '14.5bb',
+    history: 'SB 3bet 到 11bb',
+    options: ['弃牌', '跟注', '4bet 到 26bb'],
+    answer: 1,
+    explain:
+      '200bb 时跟注后的 SPR 约 8，有位、同花连张能做成隐蔽的顺子和同花，赢到对手超对的整手筹码。100bb 时 SPR 只有约 4，这些隐含赔率大多兑现不了，同样的牌通常弃掉。注意选牌方向：深筹码下升值的是 76s 这类能做成强牌的牌，KJo 这类容易被压制的不同花大牌反而贬值，面对 3bet 应该弃掉。',
+    tag: 'preflop',
+  },
+  {
+    id: 'S19',
+    level: 'L8',
+    topic: '高 SPR 下顶对面对加注',
+    format: '6-max · 0.5/1 · 200bb',
+    setup: '你在 BTN 开池 2.5bb，BB 跟注',
+    hero: ['K♦', 'J♠'],
+    board: ['K♠', '8♦', '3♣'],
+    street: '翻牌',
+    pot: '13.8bb',
+    history: 'BB 过牌，你下注 1.8bb，BB 加注到 6.5bb',
+    options: ['弃牌', '跟注', '全下 197.5bb'],
+    answer: 1,
+    explain:
+      '翻牌 SPR 约 36，要打光 200bb 需要非常强的牌。K83 彩虹面上听牌极少，BB 的加注范围以暗三条（88、33）、两对和少量后门诈唬为主 —— 全下时只会被更强的牌跟注。但弃牌又太紧：你是顶对第二踢脚，领先他的诈唬和部分薄价值。跟注控制底池，让他的诈唬继续开火，同时在转河遇到大注时保留弃牌的余地。',
+    tag: 'postflop',
+  },
+  {
+    id: 'S20',
+    level: 'L8',
+    topic: 'Straddle 局的隔离加注尺度',
+    format: '线下现金局 · 1/2 · straddle 4 · 有效 400',
+    setup: 'UTG straddle 到 4，之后两人跟入 4，其余弃牌',
+    hero: ['A♠', 'J♠'],
+    board: [],
+    street: '翻前',
+    pot: '15',
+    history: '轮到你在 BTN 行动',
+    options: ['跟入 4', '加注到 10', '加注到 20'],
+    answer: 2,
+    explain:
+      'straddle 是事实上的大盲，所有尺度按 4 来算：有位 3 倍 = 12，再为每个跟入者加 1 倍 = 20。加到 10 只相当于 2.5 倍 straddle，两个跟入者和 straddle 都会带着好赔率跟进来，你用 AJs 打一个四人底池。AJs 对跛入范围领先，值得用足够的尺度隔离，在单挑或三人底池里用位置兑现优势。',
+    tag: 'preflop',
   },
 ]
