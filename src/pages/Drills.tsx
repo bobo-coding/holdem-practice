@@ -6,6 +6,7 @@ import { TextureDrill } from '../features/TextureDrill'
 import { SpotTrainer } from '../features/SpotTrainer'
 import { RangeReadDrill } from '../features/RangeReadDrill'
 import { PushFoldDrill } from '../features/PushFoldDrill'
+import { SessionLog } from '../features/SessionLog'
 import { GENERATORS, type GeneratorId } from '../data/generators'
 
 const RFI_DRILL = 'rfi-6max-100bb'
@@ -109,6 +110,14 @@ const CATALOG: Entry[] = [
     level: 'L7',
     ready: true,
   },
+  {
+    id: 'session',
+    statId: 'session',
+    name: 'Session 日志',
+    desc: '记录每次上桌：时长、盈亏、A/B/C 自评、tilt、离桌方式',
+    level: 'L9',
+    ready: true,
+  },
 ]
 
 export function DrillsPage() {
@@ -132,7 +141,13 @@ export function DrillsPage() {
             <div class="row">
               <b>{d.name}</b>
               <span class={`tag${rate !== null ? ' on' : ''}`}>
-                {d.ready ? (rate !== null ? `${rate}% · ${s!.attempts} 题` : '开始') : '未上线'}
+                {d.id === 'session'
+                  ? `${new Set(p.sessions.map((x) => x.date)).size} / 30 天`
+                  : d.ready
+                    ? rate !== null
+                      ? `${rate}% · ${s!.attempts} 题`
+                      : '开始'
+                    : '未上线'}
               </span>
             </div>
             <div class="muted">
@@ -166,6 +181,8 @@ export function DrillPage({ id }: { id: string }) {
         <RangeReadDrill />
       ) : id === 'pushfold' ? (
         <PushFoldDrill />
+      ) : id === 'session' ? (
+        <SessionLog />
       ) : isCalc ? (
         <CalcDrill id={id as GeneratorId} />
       ) : (

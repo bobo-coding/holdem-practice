@@ -44,12 +44,31 @@ export interface Mistake {
   due: number
 }
 
+/** L9 的 session 日志：一次上桌一条 */
+export interface SessionLog {
+  id: string
+  /** YYYY-MM-DD */
+  date: string
+  minutes: number
+  hands?: number
+  /** 盈亏，单位 bb */
+  result: number
+  /** 自评 A / B / C 游戏（L9-06） */
+  game: 'A' | 'B' | 'C'
+  /** tilt 程度 0 无 · 1 轻微 · 2 明显 · 3 失控（L9-03） */
+  tilt: 0 | 1 | 2 | 3
+  /** 按计划离桌（L9-04） */
+  planned: boolean
+  note: string
+}
+
 export interface Progress {
   v: 1
   lessons: Record<string, LessonState>
   drills: Record<string, DrillState>
   mistakes: Mistake[]
   daily: { last: string; streak: number }
+  sessions: SessionLog[]
 }
 
 const empty = (): Progress => ({
@@ -58,6 +77,7 @@ const empty = (): Progress => ({
   drills: {},
   mistakes: [],
   daily: { last: '', streak: 0 },
+  sessions: [],
 })
 
 let cache: Progress | null = null
@@ -116,6 +136,18 @@ export function addMistake(m: Omit<Mistake, 'at' | 'due'>) {
 export function markLesson(id: string, score?: number) {
   update((p) => {
     p.lessons[id] = { done: true, score, at: Date.now() }
+  })
+}
+
+export function addSession(x: Omit<SessionLog, 'id'>) {
+  update((p) => {
+    p.sessions.push({ ...x, id: `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}` })
+  })
+}
+
+export function removeSession(id: string) {
+  update((p) => {
+    p.sessions = p.sessions.filter((x) => x.id !== id)
   })
 }
 

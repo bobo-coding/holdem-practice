@@ -461,3 +461,59 @@ textarea.code {
   font-size: 12px;
   word-break: break-all;
 }
+
+/* Session 日志表单 */
+.form label,
+.form .field {
+  display: block;
+  flex: 1;
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--fg-dim);
+}
+.form input,
+.form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg-elev2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.form textarea {
+  min-height: 72px;
+  resize: vertical;
+}
+.form input:focus,
+.form textarea:focus {
+  outline: none;
+  border-color: var(--accent-dim);
+}
+.seg {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.seg button {
+  flex: 1;
+  font: inherit;
+  font-size: 14px;
+  color: var(--fg-dim);
+  background: var(--bg-elev2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 4px;
+  cursor: pointer;
+}
+.seg button.on {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.session-row {
+  padding: 8px 0 2px;
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+}
