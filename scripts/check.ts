@@ -15,7 +15,16 @@ import { TURNS, BLOCKERS } from '../src/data/postflop'
 import { RANGE_TABLES, SIMPLE_RANGES, POSITIONS } from '../src/data/ranges'
 import { parseRange, rangePercent, gridCodes, comboCount, compare } from '../src/lib/range'
 import { classify, randomFlop } from '../src/lib/board'
-import { oddsQuestion, evQuestion, comboQuestion } from '../src/data/generators'
+import {
+  oddsQuestion,
+  evQuestion,
+  comboQuestion,
+  freqQuestion,
+  exploitQuestion,
+  icmQuestion,
+} from '../src/data/generators'
+import { PUSHFOLD } from '../src/data/pushfold'
+import { icm, callThreshold } from '../src/lib/icm'
 
 let failures = 0
 const fail = (m: string) => {
@@ -124,6 +133,11 @@ section('课程内容')
         !BLOCKERS.some((x) => x.board.join(' ') === b.board && x.target === b.target)
       )
         fail(`${id} 引用了不存在的阻断数据 "${b.board} / ${b.target}"`)
+      if (b.t === 'pushfold') {
+        const t = PUSHFOLD.find((x) => x.id === b.tableId)
+        if (!t) fail(`${id} 引用了不存在的 Push/Fold 表 "${b.tableId}"`)
+        else if (!t.stacks.includes(b.stack)) fail(`${id} Push/Fold 深度 ${b.stack}bb 不在表的网格里`)
+      }
       if (b.t === 'range' && !RANGE_TABLES.some((t) => t.id === b.tableId))
         fail(`${id} 引用了不存在的范围表 "${b.tableId}"`)
     }
@@ -179,6 +193,92 @@ ok(
     READ_SPOTS.map((s) => `${s.id} ${rangePercent(parseRange(s.answer)).toFixed(0)}%`).join(' '),
 )
 
+// ---------------------------------------------------------------- Push/Fold
+
+section('Push/Fold 纳什表')
+for (const t of PUSHFOLD) {
+  const codes = gridCodes().flat()
+  if (Object.keys(t.push).length !== 169 || Object.keys(t.call).length !== 169)
+    fail(`${t.id} 不是完整的 169 手`)
+  // 已知必然成立的性质：强牌任何深度都全下/跟注；最差的牌只在极浅时全下
+  for (const h of ['AA', 'KK', 'AKs', 'AKo']) {
+    if (t.push[h] !== 20) fail(`${t.id} ${h} 应在 20bb 内始终全下`)
+    if (t.call[h] !== 20) fail(`${t.id} ${h} 应在 20bb 内始终跟注`)
+  }
+  if (t.push['32o']! > 3) fail(`${t.id} 32o 全下阈值 ${t.push['32o']} 过高`)
+  // 全下范围随深度变窄：允许 2 个百分点以内的迭代噪音
+  for (let k = 1; k < t.stacks.length; k++) {
+    if (t.pushPct[k]! > t.pushPct[k - 1]! + 2) fail(`${t.id} 全下比例在 ${t.stacks[k]}bb 反常上升`)
+    if (t.callPct[k]! > t.callPct[k - 1]! + 2) fail(`${t.id} 跟注比例在 ${t.stacks[k]}bb 反常上升`)
+  }
+  // 阈值表必须能还原出与 pushPct 一致的范围（阈值截断只影响 irregular 手牌）
+  const at10 = t.stacks.indexOf(10)
+  const n = codes
+    .filter((c) => t.push[c]! >= 10 && !t.irregular.includes(c))
+    .reduce((a, c) => a + comboCount(c), 0)
+  const m = codes
+    .filter((c) => !t.irregular.includes(c))
+    .reduce((a, c) => a + comboCount(c), 0)
+  const irr = 1326 - m
+  const got = (n / 1326) * 100
+  if (Math.abs(got - t.pushPct[at10]!) > (irr / 1326) * 100 + 0.1)
+    fail(`${t.id} 10bb 阈值还原 ${got.toFixed(1)}% 与求解结果 ${t.pushPct[at10]}% 不符`)
+  if (t.irregular.length > 10) fail(`${t.id} 非单调手牌 ${t.irregular.length} 个，求解可能没收敛`)
+  // ante 让范围更宽
+  ok(
+    `${t.id}：10bb SB 全下 ${t.pushPct[at10]}% / BB 跟注 ${t.callPct[at10]}%，` +
+      `非单调 ${t.irregular.length} 手`,
+  )
+}
+{
+  const [a, b] = PUSHFOLD
+  const i = a!.stacks.indexOf(10)
+  if (!(b!.pushPct[i]! > a!.pushPct[i]!)) fail('有 ante 时全下范围应更宽')
+}
+
+// ---------------------------------------------------------------- ICM
+
+section('ICM')
+{
+  // 独立实现：枚举全部名次排列，逐个算 Harville 概率
+  const brute = (stacks: number[], pay: number[]) => {
+    const n = stacks.length
+    const ev = new Array(n).fill(0)
+    const perm = (order: number[], left: number[], prob: number) => {
+      if (left.length === 0) {
+        order.forEach((p, place) => (ev[p] += prob * (pay[place] ?? 0)))
+        return
+      }
+      const tot = left.reduce((a, i) => a + stacks[i]!, 0)
+      for (const i of left)
+        perm([...order, i], left.filter((x) => x !== i), (prob * stacks[i]!) / tot)
+    }
+    perm([], [...stacks.keys()].filter((i) => stacks[i]! > 0), 1)
+    return ev
+  }
+  const cases: [number[], number[]][] = [
+    [[5000, 3000, 2000], [50, 30, 20]],
+    [[2000, 5000, 1500, 1500], [50, 30, 20]],
+    [[30, 25, 20, 15, 10, 8], [40, 25, 15, 10, 6, 4]],
+    [[1, 1, 1, 1], [50, 30, 20]],
+  ]
+  for (const [st, pay] of cases) {
+    const a = icm(st, pay)
+    const b = brute(st, pay)
+    if (a.some((x, i) => Math.abs(x - b[i]) > 1e-9)) fail(`ICM 与枚举实现不符：${st.join('/')}`)
+    const sum = a.reduce((x, y) => x + y, 0)
+    const want = pay.slice(0, st.length).reduce((x, y) => x + y, 0)
+    if (Math.abs(sum - want) > 1e-9) fail(`ICM 总和 ${sum} ≠ 奖池 ${want}`)
+  }
+  const eq = icm([1, 1, 1, 1], [50, 30, 20])
+  if (eq.some((x) => Math.abs(x - 25) > 1e-9)) fail('等筹码应平分奖池')
+  const big = icm([5000, 3000, 2000], [50, 30, 20])
+  if (!(big[0]! < 50 && big[2]! > 20)) fail('大码 ICM 应低于筹码占比、短码应高于')
+  const t = callThreshold([2000, 5000, 1500, 1500], [50, 30, 20], 0, 1)
+  if (!(t.need > 0.5 && t.need < 1)) fail(`泡沫跟注阈值 ${t.need} 不合理`)
+  ok(`${cases.length} 组与枚举实现一致；泡沫例子跟注需 ${(t.need * 100).toFixed(1)}%`)
+}
+
 // ---------------------------------------------------------------- 牌面分类
 
 section('牌面分类器')
@@ -222,6 +322,9 @@ for (const [name, gen] of [
   ['odds', oddsQuestion],
   ['ev', evQuestion],
   ['combo', comboQuestion],
+  ['freq', freqQuestion],
+  ['exploit', exploitQuestion],
+  ['icm', icmQuestion],
 ] as const) {
   const N = 20000
   for (let i = 0; i < N; i++) {
@@ -250,6 +353,57 @@ for (const [name, gen] of [
         const ev = (+bl[3]! / 100) * +bl[1]! - (1 - +bl[3]! / 100) * +bl[2]!
         const want = (ev >= 0 ? '+' : '') + ev.toFixed(1)
         if (q.options[q.answer] !== want) fail(`ev-bluff 答案不符: ${q.prompt}`)
+      }
+    }
+
+    if (name === 'freq') {
+      const sizes: Record<string, number> = {
+        '1/3 池': 1 / 3, '1/2 池': 1 / 2, '2/3 池': 2 / 3, '3/4 池': 3 / 4, 满池: 1, '2 倍池': 2,
+      }
+      const lab = Object.keys(sizes).find((k) => q.prompt.includes(`下注 ${k}`))!
+      const sz = sizes[lab]!
+      const got = q.options[q.answer]!
+      if (q.prompt.includes('MDF')) {
+        if (got !== ((1 / (1 + sz)) * 100).toFixed(1) + '%') fail(`freq-mdf 答案不符: ${q.prompt}`)
+      } else if (q.prompt.includes('诈唬应占')) {
+        if (got !== ((sz / (1 + 2 * sz)) * 100).toFixed(1) + '%') fail(`freq-share 答案不符: ${q.prompt}`)
+      } else {
+        const v = +q.prompt.match(/有 (\d+) 个价值组合/)![1]!
+        const b = +got.match(/\d+/)![0]
+        // 平衡时对手抓诈唬无差异：b/(v+b) = s/(1+2s)
+        if (Math.abs(b / (v + b) - sz / (1 + 2 * sz)) > 0.02) fail(`freq-count 答案不符: ${q.prompt}`)
+      }
+    }
+    if (name === 'exploit') {
+      const sizes: Record<string, number> = {
+        '1/3 池': 1 / 3, '1/2 池': 1 / 2, '2/3 池': 2 / 3, '3/4 池': 3 / 4, 满池: 1, '2 倍池': 2,
+      }
+      const lab = Object.keys(sizes).find((k) => q.prompt.includes(`下注 ${k}`))
+      const f = q.prompt.match(/弃牌 (\d+)%/)
+      const x = q.prompt.match(/诈唬约占 (\d+)%/)
+      if (lab && f) {
+        const s = sizes[lab]!
+        const profitable = +f[1]! / 100 > s / (1 + s)
+        if (q.options[q.answer]!.startsWith('增加') !== profitable) fail(`exploit-bluff 方向错: ${q.prompt}`)
+      }
+      if (lab && x) {
+        const s = sizes[lab]!
+        const call = +x[1]! / 100 > s / (1 + 2 * s)
+        if ((q.options[q.answer] === '跟注') !== call) fail(`exploit-catch 方向错: ${q.prompt}`)
+      }
+    }
+    if (name === 'icm') {
+      const bub = q.prompt.match(/你 (\d+)，大码 (\d+) 全下，另外两人 (\d+) 和 (\d+)/)
+      if (bub) {
+        const st = bub.slice(1, 5).map(Number)
+        const r = callThreshold(st, [50, 30, 20], 0, 1)
+        if (q.options[q.answer] !== `${Math.round(r.need * 100)}%`) fail(`icm-call 答案不符: ${q.prompt}`)
+      }
+      const val = q.prompt.match(/A (\d+)、B (\d+)、C (\d+)。按 ICM，([ABC])/)
+      if (val) {
+        const st = val.slice(1, 4).map(Number)
+        const ev = icm(st, [50, 30, 20])['ABC'.indexOf(val[4]!)]!
+        if (q.options[q.answer] !== `$${ev.toFixed(1)}`) fail(`icm-value 答案不符: ${q.prompt}`)
       }
     }
   }

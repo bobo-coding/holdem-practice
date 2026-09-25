@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && tsx scripts/check.ts && vite build",
     "preview": "vite preview",
     "check": "tsx scripts/check.ts",
-    "precompute": "tsx scripts/precompute-flops.ts && tsx scripts/precompute-postflop.ts"
+    "precompute": "tsx scripts/precompute-flops.ts && tsx scripts/precompute-postflop.ts && tsx scripts/precompute-pushfold.ts"
   },
   "dependencies": {
     "preact": "^10.24.3"

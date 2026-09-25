@@ -5,6 +5,7 @@ import { CalcDrill } from '../features/CalcDrill'
 import { TextureDrill } from '../features/TextureDrill'
 import { SpotTrainer } from '../features/SpotTrainer'
 import { RangeReadDrill } from '../features/RangeReadDrill'
+import { PushFoldDrill } from '../features/PushFoldDrill'
 import { GENERATORS, type GeneratorId } from '../data/generators'
 
 const RFI_DRILL = 'rfi-6max-100bb'
@@ -77,12 +78,36 @@ const CATALOG: Entry[] = [
     ready: true,
   },
   {
+    id: 'freq',
+    statId: 'freq',
+    name: 'GTO 频率题',
+    desc: 'MDF、诈唬占比、平衡需要的诈唬组合数',
+    level: 'L6',
+    ready: true,
+  },
+  {
+    id: 'exploit',
+    statId: 'exploit',
+    name: '剥削调整题',
+    desc: '给出对手统计，选择偏离均衡的方向',
+    level: 'L6',
+    ready: true,
+  },
+  {
     id: 'pushfold',
     statId: 'pushfold',
     name: 'Push/Fold 训练',
-    desc: '筹码深度 + 位置 + ICM',
+    desc: '3–15bb 单挑纳什表，SB 全下 / BB 跟注',
     level: 'L7',
-    ready: false,
+    ready: true,
+  },
+  {
+    id: 'icm',
+    statId: 'icm',
+    name: 'ICM 决策题',
+    desc: '筹码折算奖金、泡沫期跟注所需胜率',
+    level: 'L7',
+    ready: true,
   },
 ]
 
@@ -139,6 +164,8 @@ export function DrillPage({ id }: { id: string }) {
         <SpotTrainer />
       ) : id === 'readrange' ? (
         <RangeReadDrill />
+      ) : id === 'pushfold' ? (
+        <PushFoldDrill />
       ) : isCalc ? (
         <CalcDrill id={id as GeneratorId} />
       ) : (

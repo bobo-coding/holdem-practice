@@ -5,6 +5,8 @@ import { L2 } from './l2'
 import { L3 } from './l3'
 import { L4 } from './l4'
 import { L5 } from './l5'
+import { L6 } from './l6'
+import { L7 } from './l7'
 
 /**
  * 课程正文总表。按级分文件，课号与 docs/curriculum.md 对应。
@@ -17,6 +19,8 @@ export const LESSONS: Record<string, LessonContent> = {
   ...L3,
   ...L4,
   ...L5,
+  ...L6,
+  ...L7,
 }
 
 export function hasContent(lessonId: string): boolean {

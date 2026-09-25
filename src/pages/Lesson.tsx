@@ -8,6 +8,8 @@ import { RangeGrid } from '../features/RangeGrid'
 import { Cards } from '../features/Cards'
 import { FLOPS } from '../data/flops'
 import { TURNS, BLOCKERS } from '../data/postflop'
+import { PUSHFOLD } from '../data/pushfold'
+import { nashRange } from '../features/PushFoldDrill'
 import { addMistake, markLesson } from '../lib/storage'
 import { navigate } from '../lib/router'
 
@@ -74,6 +76,21 @@ function BlockView({ b }: { b: Block }) {
           inRange={parseRange(table.ranges[b.position])}
           label={POSITION_LABEL[b.position]}
         />
+      )
+    }
+    case 'pushfold': {
+      const table = PUSHFOLD.find((t) => t.id === b.tableId)
+      if (!table) return null
+      return (
+        <div>
+          <RangeGrid
+            inRange={nashRange(table, b.role, b.stack)}
+            label={`${b.stack}bb ${b.role === 'push' ? 'SB 全下' : 'BB 跟注'}${table.dead ? '（有 ante）' : ''}`}
+          />
+          <div class="muted" style="font-size:12px;margin-top:6px">
+            {table.conditions}
+          </div>
+        </div>
       )
     }
     case 'flops': {

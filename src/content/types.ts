@@ -18,6 +18,8 @@ export type Block =
   | { t: 'turns'; flop: string; caption?: string }
   /** 引用预计算的阻断牌数据 */
   | { t: 'blockers'; board: string; target: string; caption?: string }
+  /** 引用预计算的 Push/Fold 纳什表，渲染某一深度下的范围矩阵 */
+  | { t: 'pushfold'; tableId: string; role: 'push' | 'call'; stack: number }
 
 export interface ReplayStep {
   /** 街名，如 "翻牌 Flop" */
