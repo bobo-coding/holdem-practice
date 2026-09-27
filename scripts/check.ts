@@ -13,7 +13,15 @@ import { READ_SPOTS } from '../src/data/readspots'
 import { FLOPS } from '../src/data/flops'
 import { TURNS, BLOCKERS } from '../src/data/postflop'
 import { RANGE_TABLES, SIMPLE_RANGES, POSITIONS } from '../src/data/ranges'
-import { parseRange, rangePercent, gridCodes, comboCount, compare } from '../src/lib/range'
+import {
+  parseRange,
+  rangePercent,
+  gridCodes,
+  comboCount,
+  compare,
+  normalizeHand,
+} from '../src/lib/range'
+import { EQ_VS_RANDOM } from '../src/data/strength'
 import { classify, randomFlop } from '../src/lib/board'
 import {
   oddsQuestion,
@@ -58,6 +66,31 @@ section('范围记法')
     1326,
   )
   eq('全选 = 100%', Math.round(rangePercent(new Set(gridCodes().flat()))), 100)
+  eq('查表输入 k2o', normalizeHand('k2o'), 'K2o')
+  eq('查表输入顺序无关', normalizeHand('2Ks'), 'K2s')
+  eq('查表输入 10 当 T', normalizeHand('A10s'), 'ATs')
+  eq('查表输入对子', normalizeHand(' 77 '), '77')
+  eq('非对子缺 s/o 拒绝', normalizeHand('AK'), null)
+  eq('对子带 s 拒绝', normalizeHand('77s'), null)
+  eq('非法点数拒绝', normalizeHand('A1o'), null)
+}
+
+section('起手牌强弱度')
+{
+  const codes = gridCodes().flat()
+  if (codes.some((c) => typeof EQ_VS_RANDOM[c] !== 'number')) fail('强弱度数据不全')
+  const sorted = [...codes].sort((a, b) => EQ_VS_RANDOM[b]! - EQ_VS_RANDOM[a]!)
+  if (sorted[0] !== 'AA') fail(`最强应为 AA，实际 ${sorted[0]}`)
+  if (sorted.at(-1) !== '32o') fail(`最弱应为 32o，实际 ${sorted.at(-1)}`)
+  // 同点数同花永远强于不同花
+  for (const c of codes)
+    if (c.endsWith('s') && !(EQ_VS_RANDOM[c]! > EQ_VS_RANDOM[c.slice(0, 2) + 'o']!))
+      fail(`${c} 应强于 ${c.slice(0, 2)}o`)
+  // 对子按点数单调
+  const pairs = codes.filter((c) => c.length === 2)
+  for (let i = 1; i < pairs.length; i++)
+    if (!(EQ_VS_RANDOM[pairs[i - 1]!]! > EQ_VS_RANDOM[pairs[i]!]!)) fail(`${pairs[i - 1]} 应强于 ${pairs[i]}`)
+  ok(`169 手：AA ${EQ_VS_RANDOM.AA}% … 32o ${EQ_VS_RANDOM['32o']}%，同花 > 不同花、对子单调`)
 }
 
 // ---------------------------------------------------------------- 范围表

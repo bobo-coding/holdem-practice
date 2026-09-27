@@ -7,6 +7,7 @@ import { SpotTrainer } from '../features/SpotTrainer'
 import { RangeReadDrill } from '../features/RangeReadDrill'
 import { PushFoldDrill } from '../features/PushFoldDrill'
 import { SessionLog } from '../features/SessionLog'
+import { NashLookup } from '../features/NashLookup'
 import { GENERATORS, type GeneratorId } from '../data/generators'
 
 const RFI_DRILL = 'rfi-6max-100bb'
@@ -103,6 +104,14 @@ const CATALOG: Entry[] = [
     ready: true,
   },
   {
+    id: 'nash',
+    statId: 'nash',
+    name: 'Push/Fold 纳什表（查表）',
+    desc: '按 ante、动作、深度查范围，或直接输入手牌查阈值',
+    level: 'L7',
+    ready: true,
+  },
+  {
     id: 'icm',
     statId: 'icm',
     name: 'ICM 决策题',
@@ -141,7 +150,9 @@ export function DrillsPage() {
             <div class="row">
               <b>{d.name}</b>
               <span class={`tag${rate !== null ? ' on' : ''}`}>
-                {d.id === 'session'
+                {d.id === 'nash'
+                  ? '查表'
+                  : d.id === 'session'
                   ? `${new Set(p.sessions.map((x) => x.date)).size} / 30 天`
                   : d.ready
                     ? rate !== null
@@ -161,7 +172,7 @@ export function DrillsPage() {
 }
 
 export function DrillPage({ id }: { id: string }) {
-  const entry = CATALOG.find((d) => d.id === id)
+  const entry = CATALOG.find((d) => d.id === id.split('?')[0])
   const isCalc = id in GENERATORS
   return (
     <>
@@ -181,6 +192,8 @@ export function DrillPage({ id }: { id: string }) {
         <RangeReadDrill />
       ) : id === 'pushfold' ? (
         <PushFoldDrill />
+      ) : id === 'nash' ? (
+        <NashLookup />
       ) : id === 'session' ? (
         <SessionLog />
       ) : isCalc ? (

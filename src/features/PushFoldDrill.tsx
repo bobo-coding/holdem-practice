@@ -6,7 +6,7 @@ import { addMistake, recordDrill } from '../lib/storage'
 
 const DRILL_ID = 'pushfold'
 
-type Role = 'push' | 'call'
+export type Role = 'push' | 'call'
 
 interface Q {
   table: PushFoldTable
@@ -25,6 +25,14 @@ export function nashRange(t: PushFoldTable, role: Role, stack: number): Set<Hand
   const th = role === 'push' ? t.push : t.call
   return new Set(gridCodes().flat().filter((c) => th[c]! >= stack))
 }
+
+/** 强弱度：阈值越深颜色越深，20bb 以上仍执行的手牌最深 */
+export function nashShade(t: PushFoldTable, role: Role): (code: HandCode) => number {
+  const th = role === 'push' ? t.push : t.call
+  return (code) => th[code]! / 20
+}
+
+export const NASH_SHADE_LABEL = '颜色越深 = 能执行到的筹码越深'
 
 /**
  * 出题偏向阈值附近：离当前深度 3bb 以内的手牌才是需要记的，
@@ -169,6 +177,8 @@ export function PushFoldDrill() {
             inRange={range}
             hit={q.hand}
             label={`${q.stack}bb ${q.role === 'push' ? 'SB 全下' : 'BB 跟注'}范围`}
+            shade={nashShade(q.table, q.role)}
+            shadeLabel={NASH_SHADE_LABEL}
           />
           <div class="muted" style="margin-top:8px">
             白框是本题手牌。{q.table.caveat}

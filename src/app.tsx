@@ -12,7 +12,8 @@ const NAV = [
 ]
 
 function view(path: string) {
-  const seg = path.split('/').filter(Boolean)
+  // 查询串（如 #/drills/nash?s=10）由页面自己读取，路由只看路径
+  const seg = path.split('?')[0]!.split('/').filter(Boolean)
   if (seg.length === 0) return <Home />
   if (seg[0] === 'level' && seg[1]) return <LevelPage id={seg[1]} />
   if (seg[0] === 'lesson' && seg[1]) return <LessonPage id={seg[1]} />

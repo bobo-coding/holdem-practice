@@ -166,3 +166,17 @@ export function compare(user: Set<HandCode>, answer: Set<HandCode>): Overlap {
   }
   return { score: union ? (inter / union) * 100 : 0, hit, missed, extra }
 }
+
+/**
+ * 把用户输入规整成矩阵代号：「k2o」→「K2o」，「2ko」→「K2o」，「77」→「77」。
+ * 非对子必须写明 s / o；返回 null 表示无法识别。
+ */
+export function normalizeHand(raw: string): HandCode | null {
+  const s = raw.replace(/\s+/g, '').replace(/10/g, 'T').toUpperCase()
+  const m = s.match(/^([AKQJT2-9])([AKQJT2-9])([SO])?$/)
+  if (!m) return null
+  const [a, b] = [m[1]!, m[2]!].sort((x, y) => idx(x) - idx(y))
+  if (a === b) return m[3] ? null : `${a}${b}`
+  if (!m[3]) return null
+  return `${a}${b}${m[3].toLowerCase()}`
+}

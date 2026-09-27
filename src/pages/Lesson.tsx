@@ -9,7 +9,7 @@ import { Cards } from '../features/Cards'
 import { FLOPS } from '../data/flops'
 import { TURNS, BLOCKERS } from '../data/postflop'
 import { PUSHFOLD } from '../data/pushfold'
-import { nashRange } from '../features/PushFoldDrill'
+import { nashRange, nashShade, NASH_SHADE_LABEL } from '../features/PushFoldDrill'
 import { addMistake, markLesson } from '../lib/storage'
 import { navigate } from '../lib/router'
 
@@ -86,9 +86,21 @@ function BlockView({ b }: { b: Block }) {
           <RangeGrid
             inRange={nashRange(table, b.role, b.stack)}
             label={`${b.stack}bb ${b.role === 'push' ? 'SB 全下' : 'BB 跟注'}${table.dead ? '（有 ante）' : ''}`}
+            shade={nashShade(table, b.role)}
+            shadeLabel={NASH_SHADE_LABEL}
           />
           <div class="muted" style="font-size:12px;margin-top:6px">
             {table.conditions}
+          </div>
+          <div style="margin-top:6px;font-size:14px">
+            <a
+              style="color:var(--accent);cursor:pointer"
+              onClick={() =>
+                navigate(`/drills/nash?t=${table.id}&r=${b.role}&s=${b.stack}`)
+              }
+            >
+              在查表页打开，换深度、查任意手牌 ›
+            </a>
           </div>
         </div>
       )

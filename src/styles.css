@@ -517,3 +517,41 @@ textarea.code {
   border-top: 1px solid var(--line);
   margin-top: 8px;
 }
+
+/* 强弱度图例 */
+.ramp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.ramp i {
+  display: inline-block;
+  width: 56px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(61, 220, 151, 0.22), rgba(61, 220, 151, 0.95));
+}
+.grid.pick .cell {
+  cursor: pointer;
+}
+
+/* 查表页 */
+.lookup-input {
+  display: block;
+  width: 100%;
+  font: inherit;
+  color: var(--fg);
+  background: var(--bg-elev2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.lookup-input:focus {
+  outline: none;
+  border-color: var(--accent-dim);
+}
+input[type='range'].stack {
+  width: 100%;
+  accent-color: var(--accent);
+  margin: 8px 0 2px;
+}
