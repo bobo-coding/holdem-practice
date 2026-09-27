@@ -8,6 +8,8 @@
  * 不标注来源的精确数字不进表。
  */
 
+import { parseRange } from '../lib/range'
+
 export type Position = 'UTG' | 'HJ' | 'CO' | 'BTN' | 'SB'
 
 export const POSITIONS: Position[] = ['UTG', 'HJ', 'CO', 'BTN', 'SB']
@@ -73,4 +75,41 @@ export const SIMPLE_RANGES: SimpleRange[] = [BB_CALL_VS_CO]
 
 export function findTable(id: string): RangeTable | undefined {
   return RANGE_TABLES.find((t) => t.id === id)
+}
+
+/**
+ * 分层着色：一手牌最早从哪个位置开始开池。越早开池的牌越强。
+ * 按 POSITIONS 顺序找第一个包含它的位置；都不开返回 null。
+ * 当前 6-max 表里 SB 范围完全包含在 BTN 之内，所以实际只有四层。
+ */
+export function openTier(t: RangeTable, code: string): Position | null {
+  for (const p of POSITIONS) if (parseRange(t.ranges[p]).has(code)) return p
+  return null
+}
+
+/** 各层的颜色深度（0..1），UTG 最深 */
+export const TIER_SHADE: Record<Position, number> = {
+  UTG: 1,
+  HJ: 0.7,
+  CO: 0.45,
+  BTN: 0.2,
+  SB: 0.05,
+}
+
+/** 预先算好一张表的分层，供矩阵着色 */
+export function tierShading(t: RangeTable): {
+  shade: (code: string) => number
+  tiers: { label: string; t: number }[]
+} {
+  const tier = new Map<string, Position>()
+  for (const p of [...POSITIONS].reverse())
+    for (const c of parseRange(t.ranges[p])) tier.set(c, p)
+  const used = POSITIONS.filter((p) => [...tier.values()].includes(p))
+  return {
+    shade: (code) => {
+      const p = tier.get(code)
+      return p ? TIER_SHADE[p] : 0
+    },
+    tiers: used.map((p) => ({ label: `${p} 起开`, t: TIER_SHADE[p] })),
+  }
 }

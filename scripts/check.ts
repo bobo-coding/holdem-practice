@@ -12,7 +12,7 @@ import { SPOTS } from '../src/data/spots'
 import { READ_SPOTS } from '../src/data/readspots'
 import { FLOPS } from '../src/data/flops'
 import { TURNS, BLOCKERS } from '../src/data/postflop'
-import { RANGE_TABLES, SIMPLE_RANGES, POSITIONS } from '../src/data/ranges'
+import { RANGE_TABLES, SIMPLE_RANGES, POSITIONS, openTier, tierShading } from '../src/data/ranges'
 import {
   parseRange,
   rangePercent,
@@ -108,6 +108,22 @@ ok(
   `${RANGE_TABLES.length} 张位置表：` +
     POSITIONS.map((p) => `${p} ${rangePercent(parseRange(RANGE_TABLES[0]!.ranges[p])).toFixed(1)}%`).join('  '),
 )
+for (const t of RANGE_TABLES) {
+  // 分层着色：每手牌的层 = 最早开它的位置；范围内的牌颜色非零，范围外不开的牌为零
+  const { shade, tiers } = tierShading(t)
+  const count: Record<string, number> = {}
+  for (const c of gridCodes().flat()) {
+    const p = openTier(t, c)
+    if (p) count[p] = (count[p] ?? 0) + 1
+    if ((p === null) !== (shade(c) === 0)) fail(`${t.id} ${c} 分层与着色不一致`)
+  }
+  for (const p of POSITIONS)
+    for (const c of parseRange(t.ranges[p]))
+      if (POSITIONS.indexOf(openTier(t, c)!) > POSITIONS.indexOf(p)) fail(`${t.id} ${c} 分层晚于 ${p}`)
+  const vals = tiers.map((x) => x.t)
+  if (vals.some((v, i) => i > 0 && v >= vals[i - 1]!)) fail(`${t.id} 分层颜色不是由深到浅`)
+  ok(`${t.id} 分层：` + Object.entries(count).map(([p, n]) => `${p} 起开 ${n} 手`).join('  '))
+}
 for (const r of SIMPLE_RANGES) {
   const set = parseRange(r.notation)
   if (set.size === 0) fail(`${r.id} 解析为空`)

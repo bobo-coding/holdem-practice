@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'preact/hooks'
 import { parseRange, randomHandWeighted, type HandCode } from '../lib/range'
-import { POSITIONS, POSITION_LABEL, RFI_6MAX, type Position } from '../data/ranges'
+import { POSITIONS, POSITION_LABEL, RFI_6MAX, tierShading, type Position } from '../data/ranges'
 import { RangeGrid } from './RangeGrid'
 import { addMistake, recordDrill } from '../lib/storage'
 
@@ -36,6 +36,8 @@ export function RangeTrainer() {
     }
     return pick()
   }
+
+  const tiers = useMemo(() => tierShading(RFI_6MAX), [])
 
   const [q, setQ] = useState<Q>(nextQ)
   const [answered, setAnswered] = useState<null | { correct: boolean; picked: boolean }>(null)
@@ -141,6 +143,10 @@ export function RangeTrainer() {
             inRange={parsed[q.pos]}
             hit={q.hand}
             label={`${q.pos} 开池范围`}
+            shade={tiers.shade}
+            tiers={tiers.tiers}
+            shadeOut
+            shadeLabel="颜色越深 = 越早的位置就开始开池"
           />
           <div class="muted" style="margin-top:8px">
             白框是本题手牌。{RFI_6MAX.caveat}

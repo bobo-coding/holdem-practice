@@ -31,6 +31,8 @@ interface Props {
   shadeLabel?: string
   /** 范围外的格子也按强弱度淡色显示（查表时看整体结构用） */
   shadeOut?: boolean
+  /** 离散分层图例；给了就替代连续的「弱→强」色带 */
+  tiers?: { label: string; t: number }[]
   onPick?: (code: HandCode) => void
 }
 
@@ -42,6 +44,7 @@ export function RangeGrid({
   shade = strengthShade,
   shadeLabel = '颜色越深 = 对随机牌的全下胜率越高',
   shadeOut = false,
+  tiers,
   onPick,
 }: Props) {
   const codes = gridCodes()
@@ -74,9 +77,18 @@ export function RangeGrid({
         })}
       </div>
       <div class="legend">
-        <span class="ramp">
-          弱<i />强
-        </span>
+        {tiers ? (
+          tiers.map((x) => (
+            <span key={x.label}>
+              <i class="swatch" style={cellStyle(x.t, false)} />
+              {x.label}
+            </span>
+          ))
+        ) : (
+          <span class="ramp">
+            弱<i />强
+          </span>
+        )}
         <span>{shadeLabel}</span>
       </div>
       <div class="legend" style="margin-top:2px">

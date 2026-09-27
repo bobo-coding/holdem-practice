@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks'
 import { findLesson } from '../data/curriculum'
 import { LESSONS } from '../content/lessons'
 import type { Block, Question } from '../content/types'
-import { findTable, POSITION_LABEL } from '../data/ranges'
+import { findTable, POSITION_LABEL, tierShading, type RangeTable } from '../data/ranges'
 import { parseRange } from '../lib/range'
 import { RangeGrid } from '../features/RangeGrid'
 import { Cards } from '../features/Cards'
@@ -12,6 +12,12 @@ import { PUSHFOLD } from '../data/pushfold'
 import { nashRange, nashShade, NASH_SHADE_LABEL } from '../features/PushFoldDrill'
 import { addMistake, markLesson } from '../lib/storage'
 import { navigate } from '../lib/router'
+
+/** 位置范围矩阵：按最早开池位置分层着色，范围外的牌也淡色显示层次 */
+function tierProps(t: RangeTable) {
+  const { shade, tiers } = tierShading(t)
+  return { shade, tiers, shadeOut: true, shadeLabel: '颜色越深 = 越早的位置就开始开池' }
+}
 
 function BlockView({ b }: { b: Block }) {
   switch (b.t) {
@@ -75,6 +81,7 @@ function BlockView({ b }: { b: Block }) {
         <RangeGrid
           inRange={parseRange(table.ranges[b.position])}
           label={POSITION_LABEL[b.position]}
+          {...tierProps(table)}
         />
       )
     }
