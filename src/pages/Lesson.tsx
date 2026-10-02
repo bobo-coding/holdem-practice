@@ -9,6 +9,7 @@ import { Cards } from '../features/Cards'
 import { FLOPS } from '../data/flops'
 import { TURNS, BLOCKERS } from '../data/postflop'
 import { PUSHFOLD } from '../data/pushfold'
+import { RiverSpot, RiverCoTable, RiverBbTable } from '../features/RiverTables'
 import { nashRange, nashShade, NASH_SHADE_LABEL } from '../features/PushFoldDrill'
 import { addMistake, markLesson } from '../lib/storage'
 import { navigate } from '../lib/router'
@@ -85,6 +86,14 @@ function BlockView({ b }: { b: Block }) {
         />
       )
     }
+    case 'river':
+      return b.view === 'spot' ? (
+        <RiverSpot />
+      ) : b.view === 'co' ? (
+        <RiverCoTable scenario={b.scenario} withEV={b.withEV} only={b.only} />
+      ) : (
+        <RiverBbTable size={b.size} only={b.only} />
+      )
     case 'pushfold': {
       const table = PUSHFOLD.find((t) => t.id === b.tableId)
       if (!table) return null

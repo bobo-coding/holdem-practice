@@ -32,6 +32,7 @@ import {
   icmQuestion,
 } from '../src/data/generators'
 import { PUSHFOLD } from '../src/data/pushfold'
+import { RIVER } from '../src/data/river'
 import { icm, callThreshold } from '../src/lib/icm'
 
 let failures = 0
@@ -182,6 +183,14 @@ section('课程内容')
         !BLOCKERS.some((x) => x.board.join(' ') === b.board && x.target === b.target)
       )
         fail(`${id} 引用了不存在的阻断数据 "${b.board} / ${b.target}"`)
+      if (b.t === 'river' && b.view !== 'spot') {
+        const known = new Set<string>(
+          b.view === 'co' ? RIVER.equilibrium.co.map((r) => r.code) : RIVER.equilibrium.bb[0]!.map((r) => r.code),
+        )
+        for (const c of b.only ?? []) if (!known.has(c)) fail(`${id} 河牌表引用了范围里没有的 ${c}`)
+        if (b.view === 'bb' && !(RIVER.sizes as readonly number[]).includes(b.size))
+          fail(`${id} 河牌表尺度 ${b.size} 不存在`)
+      }
       if (b.t === 'pushfold') {
         const t = PUSHFOLD.find((x) => x.id === b.tableId)
         if (!t) fail(`${id} 引用了不存在的 Push/Fold 表 "${b.tableId}"`)
@@ -326,6 +335,91 @@ section('ICM')
   const t = callThreshold([2000, 5000, 1500, 1500], [50, 30, 20], 0, 1)
   if (!(t.need > 0.5 && t.need < 1)) fail(`泡沫跟注阈值 ${t.need} 不合理`)
   ok(`${cases.length} 组与枚举实现一致；泡沫例子跟注需 ${(t.need * 100).toFixed(1)}%`)
+}
+
+// ---------------------------------------------------------------- 河牌求解
+
+section('L6 河牌求解')
+{
+  const E = RIVER.equilibrium
+  if (E.exploitability > 0.01) fail(`均衡可剥削度 ${E.exploitability}bb 过大，求解没收敛`)
+  const co = (c: string) => E.co.find((r) => r.code === c)!
+  const bb = (k: number, c: string) => E.bb[k]!.find((r) => r.code === c)!
+  const lk = (d: number) => RIVER.lockSeries.find((x) => x.delta === d)!
+  // L6 正文引用的数字：[说明, 实际值, 正文里写的值, 容差]
+  const cited: [string, number, number, number][] = [
+    ['均衡 EV', E.ev, 11.96, 0.005],
+    ['只能过牌 EV', RIVER.checkOnly, 10.72, 0.005],
+    ['过牌频率', E.summary.freq[0]!, 68.2, 0.05],
+    ['10bb 频率', E.summary.freq[1]!, 2.7, 0.05],
+    ['20bb 频率', E.summary.freq[2]!, 0, 0.05],
+    ['40bb 频率', E.summary.freq[3]!, 29.1, 0.05],
+    ['40bb 诈唬占比', E.summary.bluffShare[2]!, 35.5, 0.05],
+    ['BB 跟 10bb', E.callRate[0]!.call, 53.3, 0.05],
+    ['BB 跟 20bb', E.callRate[1]!.call, 38.4, 0.05],
+    ['BB 跟 40bb', E.callRate[2]!.call, 26.0, 0.05],
+    ['只用 10bb', RIVER.single[0]!.ev, 11.52, 0.005],
+    ['只用 20bb', RIVER.single[1]!.ev, 11.82, 0.005],
+    ['只用 40bb', RIVER.single[2]!.ev, 11.95, 0.005],
+    ['规则 vs 均衡', RIVER.rule.vsEquilibrium, 11.9, 0.005],
+    ['规则最坏', RIVER.rule.worstCase, 11.27, 0.005],
+    ['规则诈唬占比', RIVER.rule.summary.bluffShare[2]!, 40.7, 0.05],
+    ['AKo 过牌 EV', co('AKo').actionEV[0]!, 14.48, 0.005],
+    ['AKo 40bb EV', co('AKo').actionEV[3]!, 8.63, 0.005],
+    ['77 过牌 EV', co('77').actionEV[0]!, 19.13, 0.005],
+    ['77 40bb EV', co('77').actionEV[3]!, 23.38, 0.005],
+    ['K8s 过牌 EV', co('K8s').actionEV[0]!, 17.2, 0.005],
+    ['K8s 10bb EV', co('K8s').actionEV[1]!, 19.73, 0.005],
+    ['K8s 20bb EV', co('K8s').actionEV[2]!, 19.69, 0.005],
+    ['K8s 40bb EV', co('K8s').actionEV[3]!, 19.73, 0.005],
+    ['K8s 40bb 频率', co('K8s').freq[3]!, 60, 0.05],
+    ['87s 过牌 EV', co('87s').actionEV[0]!, 15.16, 0.005],
+    ['87s 10bb EV', co('87s').actionEV[1]!, 15.16, 0.005],
+    ['87s 过牌频率', co('87s').freq[0]!, 64.4, 0.05],
+    ['54s 过牌 EV', co('54s').actionEV[0]!, 3.6, 0.005],
+    ['54s 40bb EV', co('54s').actionEV[3]!, 4.26, 0.005],
+    ['54s 40bb 频率', co('54s').freq[3]!, 100, 0.05],
+    ['J9s 过牌 EV', co('J9s').actionEV[0]!, 2.88, 0.005],
+    ['J9s 40bb EV', co('J9s').actionEV[3]!, 1.87, 0.005],
+    ['J9s 诈唬频率', co('J9s').freq[3]!, 0, 0.05],
+    ['AA 过牌频率', co('AA').freq[0]!, 100, 0.05],
+    ['AA 胜率', co('AA').showdown, 71.2, 0.05],
+    ['54s 胜率', co('54s').showdown, 18, 0.05],
+    ['QJs 诈唬频率', co('QJs').freq[3]!, 25, 0.05],
+    ['K6s 跟 40bb', bb(2, 'K6s').call, 75.9, 0.05],
+    ['K5s 跟 40bb', bb(2, 'K5s').call, 33.3, 0.05],
+    ['K3s 跟 40bb', bb(2, 'K3s').call, 0, 0.05],
+    ['K2s 跟 40bb', bb(2, 'K2s').call, 0, 0.05],
+    ['22 跟 40bb', bb(2, '22').call, 21.3, 0.05],
+    ['多弃 15 均衡策略', lk(-0.15).eqStrategyEV, 12.04, 0.005],
+    ['多弃 15 剥削', lk(-0.15).exploitEV, 15.28, 0.005],
+    ['多弃 15 被识破', lk(-0.15).counteredEV, -2.62, 0.005],
+    ['多弃 15 读错', lk(-0.15).vsEquilibriumEV, 11.68, 0.005],
+    ['多弃 10 均衡策略', lk(-0.1).eqStrategyEV, 12.01, 0.005],
+    ['多弃 10 剥削', lk(-0.1).exploitEV, 14.09, 0.005],
+    ['多弃 5 均衡策略', lk(-0.05).eqStrategyEV, 11.98, 0.005],
+    ['多弃 5 剥削', lk(-0.05).exploitEV, 12.98, 0.005],
+    ['多跟 5 均衡策略', lk(0.05).eqStrategyEV, 11.97, 0.005],
+    ['多跟 5 剥削', lk(0.05).exploitEV, 12.41, 0.005],
+    ['多跟 10 均衡策略', lk(0.1).eqStrategyEV, 11.98, 0.005],
+    ['多跟 10 剥削', lk(0.1).exploitEV, 12.93, 0.005],
+    ['多跟 15 均衡策略', lk(0.15).eqStrategyEV, 12.0, 0.005],
+    ['多跟 15 剥削', lk(0.15).exploitEV, 13.48, 0.005],
+    ['多跟 15 被识破', lk(0.15).counteredEV, 9.34, 0.005],
+    ['多跟 15 读错', lk(0.15).vsEquilibriumEV, 11.88, 0.005],
+    ['多弃 15 后跟 40bb', RIVER.overfold.callRate[2]!.call, 11.0, 0.05],
+    ['多跟 15 后跟 40bb', RIVER.overcall.callRate[2]!.call, 41.0, 0.05],
+    ['多跟 15 剥削过牌频率', RIVER.overcall.summary.freq[0]!, 38.5, 0.05],
+  ]
+  for (const [name, got, want, tol] of cited)
+    if (Math.abs(got - want) > tol) fail(`L6 引用的「${name}」写的是 ${want}，数据是 ${got}`)
+  // 博弈论性质：均衡策略对任何偏离的对手都不低于均衡值
+  for (const x of RIVER.lockSeries)
+    if (x.eqStrategyEV < E.ev - 0.01) fail(`均衡策略对锁定对手 ${x.delta} 低于均衡值`)
+  // 最优剥削被识破后不应高于均衡值
+  for (const x of RIVER.lockSeries)
+    if (x.counteredEV > E.ev + 0.01) fail(`剥削策略被识破后反而高于均衡值 ${x.delta}`)
+  ok(`可剥削度 ${E.exploitability}bb；L6 引用的 ${cited.length} 个数字全部与求解结果一致`)
 }
 
 // ---------------------------------------------------------------- 牌面分类

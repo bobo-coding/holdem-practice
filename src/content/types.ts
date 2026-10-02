@@ -20,6 +20,16 @@ export type Block =
   | { t: 'blockers'; board: string; target: string; caption?: string }
   /** 引用预计算的 Push/Fold 纳什表，渲染某一深度下的范围矩阵 */
   | { t: 'pushfold'; tableId: string; role: 'push' | 'call'; stack: number }
+  /** L6 的求解河牌局面：局面卡 / CO 策略表 / BB 跟注表，数据来自 src/data/river.ts */
+  | { t: 'river'; view: 'spot' }
+  | {
+      t: 'river'
+      view: 'co'
+      scenario: 'equilibrium' | 'overfold' | 'overcall'
+      withEV?: boolean
+      only?: string[]
+    }
+  | { t: 'river'; view: 'bb'; size: number; only?: string[] }
 
 export interface ReplayStep {
   /** 街名，如 "翻牌 Flop" */

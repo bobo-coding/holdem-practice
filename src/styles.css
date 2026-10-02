@@ -555,3 +555,14 @@ input[type='range'].stack {
   accent-color: var(--accent);
   margin: 8px 0 2px;
 }
+
+/* 求解数据表：列多，压紧一点 */
+table.t.dense {
+  font-size: 13px;
+  margin: 10px 0 4px;
+}
+table.t.dense th,
+table.t.dense td {
+  padding: 6px 4px;
+  white-space: nowrap;
+}
